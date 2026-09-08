@@ -9,7 +9,7 @@ def test_health():
     assert response.get_json() == {
         "status": "healthy",
         "application": "student-ml-api",
-        "version": "wrong",
+        "version": "1.0.0",
     }
 
 
