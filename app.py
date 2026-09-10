@@ -1,32 +1,31 @@
-from flask import Flask, request, jsonify
+from pathlib import Path
+
+from fastapi import FastAPI
+from pydantic import BaseModel
 
 
-app = Flask(__name__)
+APPLICATION_VERSION = (Path(__file__).parent / "VERSION").read_text().strip()
+
+app = FastAPI(title="student-ml-api", version=APPLICATION_VERSION)
 
 
-@app.route("/health")
-def health():
-    return jsonify({
+class PredictionRequest(BaseModel):
+    value: int | float
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {
         "status": "healthy",
         "application": "student-ml-api",
-        "application_version": "1.1.0",
-        "model_version": "model-1"
-    })
+        "application_version": APPLICATION_VERSION,
+        "model_version": "model-1",
+    }
 
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    data = request.get_json()
-
-    if data is None or "value" not in data:
-        return jsonify({"error": "value is required"}), 400
-
-    if not isinstance(data["value"], (int, float)):
-        return jsonify({"error": "value must be a number"}), 400
-
-    value = data["value"]
-    return jsonify({"input": value, "prediction": value * 2})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+@app.post("/predict")
+def predict(request: PredictionRequest) -> dict[str, int | float]:
+    return {
+        "input": request.value,
+        "prediction": request.value * 2,
+    }

@@ -1,12 +1,13 @@
 from app import app
+from fastapi.testclient import TestClient
 
-client = app.test_client()
+client = TestClient(app)
 
 
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.get_json() == {
+    assert response.json() == {
         "status": "healthy",
         "application": "student-ml-api",
         "application_version": "1.1.0",
@@ -17,16 +18,16 @@ def test_health():
 def test_predict_success():
     response = client.post("/predict", json={"value": 10})
     assert response.status_code == 200
-    assert response.get_json() == {"input": 10, "prediction": 20}
+    assert response.json() == {"input": 10, "prediction": 20}
 
 
 def test_predict_missing_input():
     response = client.post("/predict", json={})
-    assert response.status_code == 400
-    assert "value" in response.get_json()["error"]
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][:2] == ["body", "value"]
 
 
 def test_predict_invalid_input():
     response = client.post("/predict", json={"value": "ten"})
-    assert response.status_code == 400
-    assert response.get_json()["error"] == "value must be a number"
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][:2] == ["body", "value"]
